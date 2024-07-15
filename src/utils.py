@@ -31,12 +31,20 @@ def get_exchange_rates(to_currency, from_currency, amount):
         return None
 
 
-def get_stock_prices(api_key, symbols, date):
-    """Получает цены на акции на определенную дату"""
+def get_stock_prices(api_key, settings_file, date):
+    """Получает цены на акции из json-файла на определенную дату"""
+
+    if not os.path.exists(settings_file): # Проверка на существование файла
+        print(f"Файл настроек {settings_file} не найден.")
+        return {}
+
+    with open(settings_file, "r") as f: # Загрузка из файла JSON
+        settings = json.load(f)
+    user_stocks = settings.get("user_stocks", [])
 
     prices = {}
 
-    for symbol in symbols:
+    for symbol in user_stocks:
         url = f"https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/day/{date}/{date}"
         params = {"apiKey": api_key}
 
@@ -45,7 +53,9 @@ def get_stock_prices(api_key, symbols, date):
             if response.status_code == 200:
                 data = response.json()
                 if data.get("status") == "OK" and data.get("resultsCount", 0) > 0:
-                    prices[symbol] = data["results"][0]["c"]  # Цена закрытия
+                    price = data["results"][0]["c"]  # Цена закрытия
+                    prices[symbol] = price
+
                 else:
                     print(f"Ошибка запроса для {symbol}: {data.get('status', 'No data')}")
             else:
@@ -58,22 +68,19 @@ def get_stock_prices(api_key, symbols, date):
 
 if __name__ == "__main__":
     api_key = os.getenv("POLYGON_API_KEY")
-    symbols = ["AAPL", "MSFT", "GOOGL"]  # Пример символов акций
+    settings_file = "C:\\Users\\Dell\\PycharmProjects\\SkyBank_project_Ovsianik\\user_settings.json"
     date = "2023-07-10"  # Дата в формате YYYY-MM-DD
 
     if not api_key:
         print("Ошибка: API-ключ не установлен.")
     else:
-        prices = get_stock_prices(api_key, symbols, date)
+        prices = get_stock_prices(api_key, settings_file, date)
 
     if prices:
         for symbol, price in prices.items():
-            print(f"Цена закрытия для {symbol} на {date}: {price}")
+            print(f"\"stock\": \"{symbol}\",\n  \"price\": {price}\n")
     else:
-        print(f"Не удалось получить данные о ценах на акции на {date}")
-
-
-
+        print("Не удалось получить данные о ценах на акции на {date}")
 
 
 # if __name__ == "__main__":
