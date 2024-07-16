@@ -1,17 +1,36 @@
-import os
-import requests
 import json
+import os
+
+import logging
+import requests
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
-def get_exchange_rates(to_currency, from_currency, amount):
+# Настройка логгера
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Создание обработчика для записи в файл
+file_handler = logging.FileHandler("app.log")
+file_handler.setLevel(logging.INFO)
+
+# Форматтер сообщений
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+file_handler.setFormatter(formatter)
+
+# Добавление обработчика к логгеру
+logger.addHandler(file_handler)
+
+
+def get_exchange_rates(to_currency: str, from_currency: str, amount: float) -> dict:
     """Получает данных о курсах валют с использованием API"""
 
     api_key = os.getenv("API_KEY")  # Получаем API-ключ
 
     if not api_key:
-        print("Ошибка: API-ключ не установлен.")
+        logger.error("Ошибка: API-ключ не установлен.")
         return None
 
     api_url = f"https://api.apilayer.com/exchangerates_data/latest?symbols={to_currency}&base={from_currency}"
@@ -20,25 +39,25 @@ def get_exchange_rates(to_currency, from_currency, amount):
     try:
         response = requests.get(api_url, headers=headers)  # Отправляем get-запрос к API
 
-        if response.status_code == 200: # Проверка статуса ответа
+        if response.status_code == 200:  # Проверка статуса ответа
             return response.json()
         else:
-            print(f"Ошибка при выполнении запроса: {response.status_code}")
+            logger.error(f"Ошибка при выполнении запроса: {response.status_code}")
             return None
 
     except requests.exceptions.RequestException as e:
-        print(f"Ошибка запроса: {e}")
+        logger.error(f"Ошибка запроса: {e}")
         return None
 
 
-def get_stock_prices(api_key, settings_file, date):
-    """Получает цены на акции из json-файла на определенную дату"""
+def get_stock_prices(api_key: str, settings_file: str, date: str) -> dict:
+    """Получает цены на акции на определенную дату"""
 
-    if not os.path.exists(settings_file): # Проверка на существование файла
-        print(f"Файл настроек {settings_file} не найден.")
+    if not os.path.exists(settings_file):  # Проверка на существование файла
+        logger.error(f"Файл настроек {settings_file} не найден.")
         return {}
 
-    with open(settings_file, "r") as f: # Загрузка из файла JSON
+    with open(settings_file, "r") as f:  # Загрузка из файла JSON
         settings = json.load(f)
     user_stocks = settings.get("user_stocks", [])
 
@@ -57,41 +76,10 @@ def get_stock_prices(api_key, settings_file, date):
                     prices[symbol] = price
 
                 else:
-                    print(f"Ошибка запроса для {symbol}: {data.get('status', 'No data')}")
+                    logger.error(f"Ошибка запроса для {symbol}: {data.get('status', 'No data')}")
             else:
-                print(f"Ошибка при выполнении запроса для {symbol}: {response.status_code}")
+                logger.error(f"Ошибка при выполнении запроса для {symbol}: {response.status_code}")
         except requests.exceptions.RequestException as e:
-            print(f"Ошибка запроса для {symbol}: {e}")
+            logger.error(f"Ошибка запроса для {symbol}: {e}")
 
     return prices
-
-
-if __name__ == "__main__":
-    api_key = os.getenv("POLYGON_API_KEY")
-    settings_file = "C:\\Users\\Dell\\PycharmProjects\\SkyBank_project_Ovsianik\\user_settings.json"
-    date = "2023-07-10"  # Дата в формате YYYY-MM-DD
-
-    if not api_key:
-        print("Ошибка: API-ключ не установлен.")
-    else:
-        prices = get_stock_prices(api_key, settings_file, date)
-
-    if prices:
-        for symbol, price in prices.items():
-            print(f"\"stock\": \"{symbol}\",\n  \"price\": {price}\n")
-    else:
-        print("Не удалось получить данные о ценах на акции на {date}")
-
-
-# if __name__ == "__main__":
-#     to_currency = "RUB"
-#     from_currency = "USD"
-#     amount = 25
-#
-#     result = get_exchange_rates(to_currency, from_currency, amount)
-#
-#     if result:
-#         json_result = json.dumps(result, indent=4, ensure_ascii=False)
-#         print(json_result)
-#     else:
-#         print("Не удалось получить данные о курсах валют.")
