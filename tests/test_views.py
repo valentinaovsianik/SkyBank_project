@@ -65,6 +65,3 @@ def test_get_greeting(current_hour, expected_greeting):
     fake_now = datetime(datetime.now().year, datetime.now().month, datetime.now().day, current_hour)
     with pytest.raises(AssertionError):
         assert get_greeting() == expected_greeting
-
-if __name__ == "__main__":
-    pytest.main()
