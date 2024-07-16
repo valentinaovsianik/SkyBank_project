@@ -7,14 +7,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
+
+os.makedirs(log_dir, exist_ok=True)
+
 
 # Настройка логгера
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # Создание обработчика для записи в файл
-file_handler = logging.FileHandler("app.log")
-file_handler.setLevel(logging.INFO)
+file_handler = logging.FileHandler(os.path.join(log_dir, "utils.log"), encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
 
 # Форматтер сообщений
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")

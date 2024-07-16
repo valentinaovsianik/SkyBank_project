@@ -8,13 +8,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
+os.makedirs(log_dir, exist_ok=True)
+
 # Настраиваем логгер
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-file_handler = logging.FileHandler("app.log")
-file_handler.setLevel(logging.INFO)
+file_handler = logging.FileHandler(os.path.join(log_dir, "views.log"), mode="w", encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
@@ -75,7 +78,7 @@ def get_top_transactions(file_path: str, date_str: str) -> str:
 
         # Преобразуем список словарей в JSON строку
         top_json = json.dumps(top_list, ensure_ascii=False, indent=4, default=str)
-        logger.info(f"Запрошен топ-5 транзакций с {start_date.strftime('%d.%m.%Y')} по {end_date.strftime('%d.%m.%Y')}")
+        logger.info(f"Запроc топ-5 транзакций с {start_date.strftime('%d.%m.%Y')} по {end_date.strftime('%d.%m.%Y')}")
         return top_json
 
     except Exception as e:
